@@ -8,7 +8,7 @@ import multiprocessing as mp
 
 def sampler(time_res=15, n_jobs=None):
     """ This function reduces the size of the status data by
-    sampling at every time_res minutes. The output is saved as a .csv file
+    sampling at every time_res minutes. The output is returned as a dataframe
     
     Parameters
     ----------
@@ -21,7 +21,7 @@ def sampler(time_res=15, n_jobs=None):
 
     Return
     ------
-    Nothing (output is saved into a .csv file)
+    Pandas DataFrame
 
     """
 
@@ -43,17 +43,15 @@ def sampler(time_res=15, n_jobs=None):
     # Define an output queue
     output = mp.Queue()
 
-    # batch size for each job
+    # batch size for each job (process)
     batch_size = int(np.ceil(1.0 * npnts / n_jobs)) 
 
-    # extract data form database
+    # extract data from status table in database.sqlite
     command = "SELECT station_id, bikes_available, docks_available,\
                time FROM {tb}".format(tb="status")
     cur.execute(command)
 
-    #rws = cur.fetchall()
-
-    # run the n_jobs in parallel
+    # since the data size is large, we run the n_jobs in parallel
     procs = []
     for pos in range(n_jobs):
         batch = cur.fetchmany(batch_size)
@@ -77,18 +75,17 @@ def sampler(time_res=15, n_jobs=None):
     # convert list into dictionary
     kys = ["station_id", "bikes_available", "docks_available", "time"]
     data = {kys[i]: [x[i] for x in data] for i in range(len(kys)) }
-    #for ky in :
 
     # Create a dataframe
     df = pd.DataFrame(data=data)
     df.set_index('time')
-    # save output into a file in .csv format
-
 
     return df
 
 def worker(batch, time_res, pos, output):
-    """
+    """ A worker function that will be fed into the Multiprocessing module
+    for parallel computing
+
     Parameters
     ----------
     batch : Cursor
@@ -118,14 +115,12 @@ def worker(batch, time_res, pos, output):
         except:
             tm_tmp = dt.datetime.strptime(rw[-1], "%Y-%m-%d %H:%M:%S")
 
-
         # sample the data at every time_res minutes
         if not tm_tmp.minute % time_res:
             tm_tmp = tm_tmp.replace(second=0)           # set seconds to zero
             data.append(tuple(list(rw[:-1]) + [tm_tmp]))
 
     return output.put((pos, data))
-
 
 data = sampler(time_res=15, n_jobs=None)
 
