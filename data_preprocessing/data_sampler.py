@@ -44,10 +44,13 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
     conn = sqlite3.connect("../data/database.sqlite")
     cur = conn.cursor()
 
-    # get the total number of data points in status table
-    command = "SELECT Count(station_id) FROM {tb}".format(tb="status")
-    cur.execute(command)
-    npnts = cur.fetchone()[0]
+#    # get the total number of data points in status table
+#    command = "SELECT Count(station_id) FROM {tb}".format(tb="status")
+#    cur.execute(command)
+#    npnts = cur.fetchone()[0]
+    npnts = 160
+
+
 
     # Define an output queue
     output = mp.Queue()
@@ -71,7 +74,7 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
     # exit the completed processes
     for p in procs:
         p.join()
-    
+ 
     # collect the results of each process
     data = [output.get() for p in procs]
 
@@ -81,6 +84,9 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
     # sort by time
     data.sort(key=lambda x: x[-1])
 
+    # close db connection
+    cur.close()
+
     # save the output into a db
     if save_to_db:
 
@@ -89,9 +95,9 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
         cur_new = conn_new.cursor()
 
         # create a table
-        if not tbn:
-            tbn = "time_res_" str(time_res) + "min"
-        colname_type = "station_id INTEGER, bikes_available INTEGER,
+        if not table_name:
+            tbn = "time_res_" + str(time_res) + "min"
+        colname_type = "station_id INTEGER, bikes_available INTEGER,\
                         docks_available INTEGER, time TIMESTAMP PRIMARY KEY"
         command = "CREATE TABLE IF NOT EXISTS {tbn} ({colname_type})"\
                   .format(tbn=tbn, colname_type=colname_type)
@@ -103,10 +109,12 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
                   .format(tbn=tbn, cols=cols)
         for rw in data:
             cur_new.execute(command, rw)
-        cur_new.commit()
+        conn_new.commit()
 
         # close db connection
         cur_new.close()
+
+        return
     else:
 
         # convert list into dictionary
@@ -117,10 +125,7 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
         df = pd.DataFrame(data=data)
         df.set_index('time')
 
-    # close db connection
-    cur.close()
-
-    return df
+        return df
 
 def worker(batch, time_res, pos, output):
     """ A worker function that will be fed into the Multiprocessing module
@@ -128,7 +133,7 @@ def worker(batch, time_res, pos, output):
 
     Parameters
     ----------
-    batch : Cursor
+    batch : Sqlite3 Cursor Object
         Holds the outputs of an sqlite query
     time_res : int
         Time resolution in minutes, default to 15 minutes
@@ -164,6 +169,14 @@ def worker(batch, time_res, pos, output):
     return output.put((pos, data))
 
 # run the code
-df = sampler(time_res=15, n_jobs=None)
+def main():
+    save_to_db=True
+    #save_to_db=False
 
-#"../data/sampled_data.sqlite"
+    df = sampler(time_res=15, n_jobs=None, save_to_db=save_to_db,
+            db_name="../data/sampled_data.sqlite", table_name=None)
+    return df
+
+if __name__ == "__main__":
+    df = main()
+
