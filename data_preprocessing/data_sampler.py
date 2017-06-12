@@ -116,6 +116,7 @@ def worker(batch, time_res, pos, output):
         # sample the data at every time_res minutes
         if not tm_tmp.minute % time_res:
             tm_tmp = tm_tmp.replace(second=0)           # set seconds to zero
+            print tm_tmp
             data.append(tuple(list(rw[:-1]) + [tm_tmp]))
 
     return output.put((pos, data))
