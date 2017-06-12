@@ -104,8 +104,16 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
         cols = "station_id, bikes_available, docks_available, time"
         command = "INSERT or IGNORE INTO {tbn}({cols}) VALUES (?, ?, ?, ?)"\
                   .format(tbn=tbn, cols=cols)
+
+        N = 0
         for rw in data:
             cur_new.execute(command, rw)
+            N = N + 1
+
+            # commit 1000 data points at a time
+            if N > 1000:
+                conn_new.commit()
+                N = 0
         conn_new.commit()
 
         # close db connection
@@ -160,7 +168,6 @@ def worker(batch, time_res, pos, output):
         # sample the data at every time_res minutes
         if not tm_tmp.minute % time_res:
             tm_tmp = tm_tmp.replace(second=0)           # set seconds to zero
-            print tm_tmp
             data.append(tuple(list(rw[:-1]) + [tm_tmp]))
 
     return output.put((pos, data))
