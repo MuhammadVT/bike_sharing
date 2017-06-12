@@ -6,9 +6,10 @@ import datetime as dt
 import multiprocessing as mp
 
 
-def sampler(time_res=15, n_jobs=None):
+def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.sqlite",
+            table_name=None):
     """ This function reduces the size of the status data by
-    sampling at every time_res minutes. The output is returned as a dataframe
+    sampling at every time_res minutes. The output is stored in a database
     
     Parameters
     ----------
@@ -18,10 +19,20 @@ def sampler(time_res=15, n_jobs=None):
         The number of jobs to run in parallel. If set to None, 
         then the number of jobs is set to the number of cores.
         Defulat value is -1.
+    save_to_db : bool
+        If set to true the output will be save into a database,
+        else returns a dataframe that holds the output.
+    db_name : str
+        Name of the database where the output is stored. Only effective if save_to_db 
+        is True. Default to ./sampled_data.sqlite 
+    table_name : str or None
+        Name of the table where the output is stored. Only effective if save_to_db 
+        is True. Default to None in which case the table name will be automatically created. 
 
     Return
     ------
-    Pandas DataFrame
+    Pandas DataFrame is returned if save_to_db is True else returns nothing
+    and the output is stored in a database.
 
     """
 
@@ -70,13 +81,44 @@ def sampler(time_res=15, n_jobs=None):
     # sort by time
     data.sort(key=lambda x: x[-1])
 
-    # convert list into dictionary
-    kys = ["station_id", "bikes_available", "docks_available", "time"]
-    data = {kys[i]: [x[i] for x in data] for i in range(len(kys)) }
+    # save the output into a db
+    if save_to_db:
 
-    # Create a dataframe
-    df = pd.DataFrame(data=data)
-    df.set_index('time')
+        # make db connection
+        conn_new = sqlite3.connect(db_name)
+        cur_new = conn_new.cursor()
+
+        # create a table
+        if not tbn:
+            tbn = "time_res_" str(time_res) + "min"
+        colname_type = "station_id INTEGER, bikes_available INTEGER,
+                        docks_available INTEGER, time TIMESTAMP PRIMARY KEY"
+        command = "CREATE TABLE IF NOT EXISTS {tbn} ({colname_type})"\
+                  .format(tbn=tbn, colname_type=colname_type)
+        cur_new.execute(command)
+
+        # populate the table
+        cols = "station_id, bikes_available, docks_available, time"
+        command = "INSERT or IGNORE INTO {tbn}({cols}) VALUES (?, ?, ?, ?)"\
+                  .format(tbn=tbn, cols=cols)
+        for rw in data:
+            cur_new.execute(command, rw)
+        cur_new.commit()
+
+        # close db connection
+        cur_new.close()
+    else:
+
+        # convert list into dictionary
+        kys = ["station_id", "bikes_available", "docks_available", "time"]
+        data = {kys[i]: [x[i] for x in data] for i in range(len(kys)) }
+
+        # Create a dataframe
+        df = pd.DataFrame(data=data)
+        df.set_index('time')
+
+    # close db connection
+    cur.close()
 
     return df
 
@@ -124,4 +166,4 @@ def worker(batch, time_res, pos, output):
 # run the code
 df = sampler(time_res=15, n_jobs=None)
 
-
+#"../data/sampled_data.sqlite"
