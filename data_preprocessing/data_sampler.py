@@ -44,13 +44,10 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
     conn = sqlite3.connect("../data/database.sqlite")
     cur = conn.cursor()
 
-#    # get the total number of data points in status table
-#    command = "SELECT Count(station_id) FROM {tb}".format(tb="status")
-#    cur.execute(command)
-#    npnts = cur.fetchone()[0]
-    npnts = 160
-
-
+    # get the total number of data points in status table
+    command = "SELECT Count(station_id) FROM {tb}".format(tb="status")
+    cur.execute(command)
+    npnts = cur.fetchone()[0]
 
     # Define an output queue
     output = mp.Queue()
