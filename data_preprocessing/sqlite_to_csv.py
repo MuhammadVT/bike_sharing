@@ -35,6 +35,6 @@ def sqlite_to_csv(dbname, tbname, outfile):
 
 # run the code
 dbname = "../data/sampled_data.sqlite"
-tbname = "time_res_5min"
+tbname = "time_res_15min"
 outfile = "../data/status_time_res_15min.csv"
 sqlite_to_csv(dbname, tbname, outfile)
