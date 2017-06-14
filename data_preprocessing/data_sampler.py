@@ -38,6 +38,7 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
 
     # number of jobs to be run in parallel
     if not n_jobs:
+        # get the number of cups
         n_jobs = mp.cpu_count()
 
     # make db connection
@@ -49,87 +50,93 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
     cur.execute(command)
     npnts = cur.fetchone()[0]
 
-    # Define an output queue
-    output = mp.Queue()
 
     # batch size for each job (process)
-    batch_size = int(np.ceil(1.0 * npnts / n_jobs)) 
+    # batch_size = int(np.ceil(1.0 * npnts / n_jobs)) 
+    batch_size = 2000  # more than this seems to be problematic
 
     # extract data from status table in database.sqlite
     command = "SELECT station_id, bikes_available, docks_available,\
                time FROM {tb}".format(tb="status")
     cur.execute(command)
 
-    # since the data size is large, we run the n_jobs in parallel
-    procs = []
-    for pos in range(n_jobs):
-        batch = cur.fetchmany(batch_size)
-        p = mp.Process(target=worker, args = (batch, time_res, pos, output))
-        procs.append(p)
-        p.start()
+    # since the data size is large, we split the whole work into iter_num pieces and
+    # for each piece we run n_jobs of processes in parallel
+    if save_to_db:
+        iter_num = int(np.ceil(1.0 * npnts / (n_jobs * batch_size)))
+    else:
+        iter_num = 1
 
-    # exit the completed processes
-    for p in procs:
-        p.join()
- 
-    # collect the results of each process
-    data = [output.get() for p in procs]
+    for k in range(iter_num):
 
-    # flatted the list of lists
-    data = [x for lst in data for x in lst[1]]
+        # Define an output queue
+        output = mp.Queue()
 
-    # sort by time
-    data.sort(key=lambda x: x[-1])
+        # send jobs in parallel
+        procs = []
+        for pos in range(n_jobs):
+            batch = cur.fetchmany(batch_size)
+            p = mp.Process(target=worker, args = (batch, time_res, pos, output))
+            procs.append(p)
+            p.start()
+
+        # exit the completed processes
+        for p in procs:
+            p.join()
+     
+        # collect the results of each process
+        data = [output.get() for p in procs]
+
+        # flatted the list of lists
+        data = [x for lst in data for x in lst[1]]
+
+        # sort by time
+        data.sort(key=lambda x: x[-1])
+
+        # save the output into a db
+        if save_to_db:
+
+            # make db connection
+            conn_new = sqlite3.connect(db_name)
+            cur_new = conn_new.cursor()
+
+            # create a table
+            if not table_name:
+                tbn = "time_res_" + str(time_res) + "min"
+            colname_type = "station_id INTEGER, bikes_available INTEGER,\
+                            docks_available INTEGER, time TIMESTAMP PRIMARY KEY"
+            command = "CREATE TABLE IF NOT EXISTS {tbn} ({colname_type})"\
+                      .format(tbn=tbn, colname_type=colname_type)
+            cur_new.execute(command)
+
+            # populate the table
+            cols = "station_id, bikes_available, docks_available, time"
+            command = "INSERT or IGNORE INTO {tbn}({cols}) VALUES (?, ?, ?, ?)"\
+                      .format(tbn=tbn, cols=cols)
+            for rw in data:
+                cur_new.execute(command, rw)
+            conn_new.commit()
+            print "commited " + str(len(data)) +  " data points to db"
+
+            # close db connection
+            cur_new.close()
+
+        else:
+            # convert list into dictionary
+            kys = ["station_id", "bikes_available", "docks_available", "time"]
+            data = {kys[i]: [x[i] for x in data] for i in range(len(kys)) }
+
+            # Create a dataframe
+            df = pd.DataFrame(data=data)
+            df.set_index('time')
 
     # close db connection
     cur.close()
 
-    # save the output into a db
+    # return output
     if save_to_db:
-
-        # make db connection
-        conn_new = sqlite3.connect(db_name)
-        cur_new = conn_new.cursor()
-
-        # create a table
-        if not table_name:
-            tbn = "time_res_" + str(time_res) + "min"
-        colname_type = "station_id INTEGER, bikes_available INTEGER,\
-                        docks_available INTEGER, time TIMESTAMP PRIMARY KEY"
-        command = "CREATE TABLE IF NOT EXISTS {tbn} ({colname_type})"\
-                  .format(tbn=tbn, colname_type=colname_type)
-        cur_new.execute(command)
-
-        # populate the table
-        cols = "station_id, bikes_available, docks_available, time"
-        command = "INSERT or IGNORE INTO {tbn}({cols}) VALUES (?, ?, ?, ?)"\
-                  .format(tbn=tbn, cols=cols)
-
-        N = 0
-        for rw in data:
-            cur_new.execute(command, rw)
-            N = N + 1
-
-            # commit 1000 data points at a time
-            if N > 1000:
-                conn_new.commit()
-                N = 0
-        conn_new.commit()
-
-        # close db connection
-        cur_new.close()
-
         return
     else:
-
-        # convert list into dictionary
-        kys = ["station_id", "bikes_available", "docks_available", "time"]
-        data = {kys[i]: [x[i] for x in data] for i in range(len(kys)) }
-
-        # Create a dataframe
-        df = pd.DataFrame(data=data)
-        df.set_index('time')
-
         return df
 
 def worker(batch, time_res, pos, output):
@@ -138,8 +145,8 @@ def worker(batch, time_res, pos, output):
 
     Parameters
     ----------
-    batch : Sqlite3 Cursor Object
-        Holds the outputs of an sqlite query
+    batch : List 
+        A list of tuples that Holds the outputs of an sqlite query
     time_res : int
         Time resolution in minutes, default to 15 minutes
     pos : int
