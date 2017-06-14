@@ -183,7 +183,7 @@ def main():
     save_to_db=True
     #save_to_db=False
 
-    df = sampler(time_res=5, n_jobs=None, save_to_db=save_to_db,
+    df = sampler(time_res=10, n_jobs=None, save_to_db=save_to_db,
             db_name="../data/sampled_data.sqlite", table_name=None)
     return df
 
