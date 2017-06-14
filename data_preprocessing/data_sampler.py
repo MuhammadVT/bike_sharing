@@ -103,7 +103,8 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
             if not table_name:
                 tbn = "time_res_" + str(time_res) + "min"
             colname_type = "station_id INTEGER, bikes_available INTEGER,\
-                            docks_available INTEGER, time TIMESTAMP PRIMARY KEY"
+                            docks_available INTEGER, time TIMESTAMP,\
+                            CONSTRAINT status_pk PRIMARY KEY (station_id, time)"
             command = "CREATE TABLE IF NOT EXISTS {tbn} ({colname_type})"\
                       .format(tbn=tbn, colname_type=colname_type)
             cur_new.execute(command)
@@ -183,7 +184,7 @@ def main():
     save_to_db=True
     #save_to_db=False
 
-    df = sampler(time_res=10, n_jobs=None, save_to_db=save_to_db,
+    df = sampler(time_res=15, n_jobs=None, save_to_db=save_to_db,
             db_name="../data/sampled_data.sqlite", table_name=None)
     return df
 
