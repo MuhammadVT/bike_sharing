@@ -1,37 +1,48 @@
-def display_folium_figure(input_html, output_png="map.png"):
+def html_to_png(input_html, output_png="./map.png"):
     """
-    This function saves the folium output map in png format so that it can be 
-    displayed in a GitHub page.
+    This function opens the html file given to input_html, takes a screenshot of it, and saves it
+    as a png file.
 
     Parameters
     ----------
     input_html : str
-        Name of the input html. e.g., "map.html" 
+        Relative path and name of the input html file. e.g., "./map.html" 
     output_png : str
-        Name of the output figure
+        Relative path and name of the output png file
 
     Returns
     -------
     Nothing
-
-    Acknowledgment : code for this function is taken from psychemedia's comment in
-    the folowing link.
-    https://github.com/python-visualization/folium/issues/35#issuecomment-164784086
     """
     import os
     import time
     from selenium import webdriver
+    from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
+    # delay is needed to give enough time for browser to load input_html file
     delay=5
-    tmpurl='file://{path}/{mapfile}'.format(path=os.getcwd(),mapfile=input_html)
-    m.save(input_html)
 
+    # contruct the full path for input_html
+    input_url='file://{path}/{mapfile}'.format(path=os.getcwd(),mapfile=input_html)
+
+    # launch firefox
+    capabilities = webdriver.DesiredCapabilities().FIREFOX
+    capabilities["marionette"] = False
+    #binary = FirefoxBinary("/usr/lib/firefox/firefox")
+    #browser = webdriver.Firefox(firefox_binary=binary)
     browser = webdriver.Firefox()
-    browser.get(tmpurl)
+    #browser = webdriver.Chrome()
 
-    #Give the map tiles some time to load
+    # open the html file in a browser
+    browser.get(input_url)
+
+    #Give the map some time to load
     time.sleep(delay)
+    
+    # same the screen as png
     browser.save_screenshot(output_png)
+
+    # exit from the browser
     browser.quit()
 
     return
