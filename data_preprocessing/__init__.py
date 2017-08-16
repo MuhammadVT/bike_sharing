@@ -3,4 +3,9 @@ try:
 except Exception, e:
     print(e)
 
+try:
+    from sqlite_to_csv import *
+except Exception, e:
+    print(e)
+
 	

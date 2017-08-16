@@ -34,10 +34,13 @@ def sqlite_to_csv(dbname, tbname, outfile):
 
 
 # run the code
-time_res = "5min"
-dbname = "../data/sampled_data.sqlite"
-tbname = "time_res_" + time_res
-outfile = "../data/status_time_res_" + time_res + ".csv"
-print "converting an sqlite table, status_time_res_" + time_res + ", to a .csv file"
-sqlite_to_csv(dbname, tbname, outfile)
-print "status_time_res_" + time_res + ".csv has been created."
+def main():
+    time_res = "5min"
+    dbname = "../data/sampled_data.sqlite"
+    tbname = "time_res_" + time_res
+    outfile = "../data/status_time_res_" + time_res + ".csv"
+    print "converting an sqlite table, status_time_res_" + time_res + ", to a .csv file"
+    sqlite_to_csv(dbname, tbname, outfile)
+    print "status_time_res_" + time_res + ".csv has been created."
+if __name__ == "__main__":
+    main()
