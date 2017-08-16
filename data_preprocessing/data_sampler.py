@@ -31,7 +31,7 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
 
     Return
     ------
-    Pandas DataFrame is returned if save_to_db is True else returns nothing
+    Pandas DataFrame is returned if save_to_db is True else returns the db_name
     and the output is stored in a database.
 
     """
@@ -135,7 +135,7 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
 
     # return output
     if save_to_db:
-        return
+        return db_name
     else:
         return df
 

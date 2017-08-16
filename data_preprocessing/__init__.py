@@ -1,5 +1,5 @@
 try:
-    from data_sample import *
+    from data_sampler import *
 except Exception, e:
     print(e)
 
