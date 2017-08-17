@@ -61,7 +61,7 @@ def test():
     import datetime as dt 
     stm = dt.datetime(2013, 9, 1)
     etm = dt.datetime(2013, 10, 1)
-    df = read_data_from_db(stm, etm, station_id=100, time_res="15")
+    df = read_data_from_db(stm, etm, station_id=2, time_res="15")
     
     return df
 
