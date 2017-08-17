@@ -52,7 +52,8 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
 
     # batch size for each job (process)
     # batch_size = int(np.ceil(1.0 * npnts / n_jobs)) 
-    batch_size = 1000  # more than this seems to be problematic
+    #batch_size = 1000  # NOTE: more than this seems to be problematic for time_res=5
+    batch_size = 200  # NOTE: more than this seems to be problematic for time_res=1
 
     # extract data from status table in database.sqlite
     command = "SELECT station_id, bikes_available, docks_available,\
@@ -186,10 +187,10 @@ def worker(batch, time_res, pos, output):
 # run the code
 def main():
     save_to_db=True
-    #save_to_db=False
 
-    df = sampler(time_res=5, n_jobs=None, save_to_db=save_to_db,
-            db_name="../data/sampled_data.sqlite", table_name=None)
+    df = sampler(time_res=1, n_jobs=None, save_to_db=save_to_db,
+            db_name="../data/sampled_data.sqlite", table_name=None, verbose=True)
+            #db_name="../data/test.sqlite", table_name=None, verbose=True)
     return df
 
 if __name__ == "__main__":
