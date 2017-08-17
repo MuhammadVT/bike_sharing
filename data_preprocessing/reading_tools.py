@@ -1,4 +1,4 @@
-def read_data_from_db(stm, etm, station_id, time_res="1"):
+def read_data_from_db(stm, etm, station_id=None, time_res="1"):
     """ reads data (time resolution set by rime_res) from an sqlite3 db
     for a period of time (set by stm and etm) for a given station_id.
     
@@ -8,8 +8,8 @@ def read_data_from_db(stm, etm, station_id, time_res="1"):
         The start time
     etm : datetime.datetime
         The end time
-    station_id : int
-        The station id
+    station_id : int, default to None
+        The station id. If set to None, data fro all the stations will be read.
     time_res : str
         Time resolution.
         
@@ -22,23 +22,44 @@ def read_data_from_db(stm, etm, station_id, time_res="1"):
     import pandas as pd
     
     # construct db name and table name
-    if time_res == "1":
-        db_name = "../data/database.sqlite"
-        table_name = "status"
-    else:
-        db_name = "../data/sampled_data.sqlite"
-        table_name = "time_res_" + str(time_res) + "min"
+    db_name = "../data/sampled_data.sqlite"
+    table_name = "time_res_" + str(time_res) + "min"
 
     # make db connection
     conn = sqlite3.connect(database=db_name)
 
-    #sql = table_name
-    sql = "SELECT * FROM {tb} WHERE station_id={station_id} AND "
-    sql = sql + "(DATETIME(time) BETWEEN '{stm}' and '{etm}')"
-    sql = sql.format(tb=table_name, station_id=station_id, stm=stm, etm=etm)
+    if station_id is not None:
+        # check whehter the user provided station_id actually exists
+        command = "SELECE DISTINCT station_id from {tb}".format(tb=table_name)
+        ids = conn.cursor().execute(command).fetchall()
+        valid_id = station_id in [x for x in ids]
+
+    # if station_id is None then return data for all the stations
+    if not station_id:
+        sql = "SELECT * FROM {tb} WHERE "
+        sql = sql + "DATETIME(time) BETWEEN '{stm}' and '{etm}'"
+        sql = sql.format(tb=table_name, station_id=station_id, stm=stm, etm=etm)
     
+    # if station_id is not None then return data if station_id is valid
+    else:
+        if valid_id:
+            sql = "SELECT * FROM {tb} WHERE station_id={station_id} AND "
+            sql = sql + "(DATETIME(time) BETWEEN '{stm}' and '{etm}')"
+            sql = sql.format(tb=table_name, station_id=station_id, stm=stm, etm=etm)
+        else:
+            return None
+
     # get the data we want in a pandas DataFrame format
     df = pd.read_sql(sql, conn, index_col=None, coerce_float=True, params=None,
                   parse_dates=["time"], columns=None, chunksize=None)
     
     return df
+
+def test():
+    import datetime as dt 
+    stm = dt.datetime(2013, 9, 20)
+    etm = dt.datetime(2013, 9, 23)
+    read_data_from_db(stm, etm, station_id=None, time_res="15"):
+
+if __name__ == "__main__":
+    test()
