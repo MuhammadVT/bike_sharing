@@ -52,8 +52,10 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
 
     # batch size for each job (process)
     # batch_size = int(np.ceil(1.0 * npnts / n_jobs)) 
-    #batch_size = 1000  # NOTE: more than this seems to be problematic for time_res=5
-    batch_size = 200  # NOTE: more than this seems to be problematic for time_res=1
+    if time_res < 5:
+        batch_size = 200  # NOTE: more than this seems to be problematic for time_res < 5
+    else:
+        batch_size = 1000  # NOTE: more than this seems to be problematic for time_res=5 and above
 
     # extract data from status table in database.sqlite
     command = "SELECT station_id, bikes_available, docks_available,\
