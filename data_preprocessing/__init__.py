@@ -8,4 +8,10 @@ try:
 except Exception, e:
     print(e)
 
+try:
+    from reading_tools import *
+except Exception, e:
+    print(e)
+
+
 	
