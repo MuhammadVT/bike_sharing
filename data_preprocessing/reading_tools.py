@@ -1,3 +1,4 @@
+import pdb
 def read_data_from_db(stm, etm, station_id=None, time_res="1"):
     """ reads data (time resolution set by rime_res) from an sqlite3 db
     for a period of time (set by stm and etm) for a given station_id.
@@ -30,15 +31,15 @@ def read_data_from_db(stm, etm, station_id=None, time_res="1"):
 
     if station_id is not None:
         # check whehter the user provided station_id actually exists
-        command = "SELECE DISTINCT station_id from {tb}".format(tb=table_name)
+        command = "SELECT DISTINCT station_id from {tb}".format(tb=table_name)
         ids = conn.cursor().execute(command).fetchall()
-        valid_id = station_id in [x for x in ids]
+        valid_id = station_id in [x[0] for x in ids]
 
     # if station_id is None then return data for all the stations
-    if not station_id:
+    if station_id is None:
         sql = "SELECT * FROM {tb} WHERE "
         sql = sql + "DATETIME(time) BETWEEN '{stm}' and '{etm}'"
-        sql = sql.format(tb=table_name, station_id=station_id, stm=stm, etm=etm)
+        sql = sql.format(tb=table_name, stm=stm, etm=etm)
     
     # if station_id is not None then return data if station_id is valid
     else:
@@ -47,6 +48,7 @@ def read_data_from_db(stm, etm, station_id=None, time_res="1"):
             sql = sql + "(DATETIME(time) BETWEEN '{stm}' and '{etm}')"
             sql = sql.format(tb=table_name, station_id=station_id, stm=stm, etm=etm)
         else:
+            print("invalid station_id, please choose a correct one. Returning None....")
             return None
 
     # get the data we want in a pandas DataFrame format
@@ -57,9 +59,11 @@ def read_data_from_db(stm, etm, station_id=None, time_res="1"):
 
 def test():
     import datetime as dt 
-    stm = dt.datetime(2013, 9, 20)
-    etm = dt.datetime(2013, 9, 23)
-    read_data_from_db(stm, etm, station_id=None, time_res="15"):
+    stm = dt.datetime(2013, 9, 1)
+    etm = dt.datetime(2013, 10, 1)
+    df = read_data_from_db(stm, etm, station_id=100, time_res="15")
+    
+    return df
 
 if __name__ == "__main__":
-    test()
+    df = test()
