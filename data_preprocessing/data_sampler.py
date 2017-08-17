@@ -7,7 +7,7 @@ import multiprocessing as mp
 
 
 def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.sqlite",
-            table_name=None):
+            table_name=None, verbose=False):
     """ This function reduces the size of the status data by
     sampling at every time_res minutes. The output is stored in a database
     
@@ -102,6 +102,8 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
             # create a table
             if not table_name:
                 tbn = "time_res_" + str(time_res) + "min"
+	    else:
+		tbn = table_name
             colname_type = "station_id INTEGER, bikes_available INTEGER,\
                             docks_available INTEGER, time TIMESTAMP,\
                             CONSTRAINT status_pk PRIMARY KEY (station_id, time)"
@@ -116,7 +118,9 @@ def sampler(time_res=15, n_jobs=None, save_to_db=True, db_name="./sampled_data.s
             for rw in data:
                 cur_new.execute(command, rw)
             conn_new.commit()
-            print "commited " + str(len(data)) +  " data points to db"
+
+	    if verbose:
+	        print "commited " + str(len(data)) +  " data points to db"
 
             # close db connection
             cur_new.close()
