@@ -17,6 +17,9 @@ def read_data_from_db(stm, etm, station_id, time_res="1"):
     -------
     pandas.DataFrame
     """
+
+    import sqlite3
+    import pandas as pd
     
     # construct db name and table name
     if time_res == "1":
