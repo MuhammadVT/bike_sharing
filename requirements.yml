@@ -114,6 +114,8 @@ dependencies:
   - nb-conda-kernels==2.1.0
   - prompt-toolkit==1.0.15
   - qtconsole==4.3.1
+  - scipy==0.19.1
+  - seaborn==0.8
   - selenium==3.5.0
   - webencodings==0.5.1
 prefix: /home/muhammad/anaconda2/envs/bike_share
