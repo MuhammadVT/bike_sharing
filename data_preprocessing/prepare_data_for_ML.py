@@ -1,6 +1,7 @@
 class prepare_data_for_ML(object):
     def __init__(self, status_data_path="../data/status_time_res_15min.csv",
                  weather_data_path="../data/weather_fixed.csv",
+                 station_ids=None,
                  nrows=None):
 
         """ Prepares the data for various ML models.
@@ -11,9 +12,12 @@ class prepare_data_for_ML(object):
             Path to status data in csv format 
         weather_data_path : str
             Path to weather data in csv format 
+        station_ids : list
+            A list of the station ids for which data points are selected.
+            Default to None, in which case all the data points will be read.
         nrows : int
             The number of rows (data points) to be read.
-            Default to None, in which case all the data will be read.
+            Default to None, in which case all the data points will be read.
 
         Returns
         -------
@@ -29,6 +33,10 @@ class prepare_data_for_ML(object):
         if status_data_path:
             self.status_data = pd.read_csv(status_data_path, nrows=nrows,
                                            parse_dates=["time"])
+            if station_ids:
+                idx_bool = self.status_data.station_id.apply(lambda x:\
+                                True if x in station_ids else False)
+                self.status_data = self.status_data.loc[idx_bool]
         else:   
             self.status_data = None 
 
@@ -92,6 +100,7 @@ class prepare_data_for_ML(object):
 # test code
 if __name__ == "__main__":
     nrows = 100
-    obj = prepare_data_for_ML(nrows=nrows)
+    station_ids = [2]
+    obj = prepare_data_for_ML(nrows=nrows, station_ids=station_ids)
     df = obj.prepare_data_for_RF()
       
