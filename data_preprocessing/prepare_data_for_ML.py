@@ -44,6 +44,11 @@ class prepare_data_for_ML(object):
         if weather_data_path:
             self.weather_data = pd.read_csv(weather_data_path, nrows=nrows,
                                             parse_dates=["date"])
+
+            # replace NaN in "events" to "normal"
+            self.weather_data.events.fillna(value="Normal", inplace=True)
+            
+
         else:   
             self.weather_data = None
 
@@ -62,7 +67,7 @@ class prepare_data_for_ML(object):
             df.drop(df.index[-1], inplace=True)
             
             # add features from status data
-            df.loc[:, "time_of_day"] = df.time.apply(lambda x: x.strftime("%H:%M"))
+            df.loc[:, "time_of_day"] = df.time.apply(lambda x: x.strftime("%H%M"))
             df.loc[:, "day_of_week"] = df.time.apply(lambda x: x.weekday())
             df.loc[:, "month_of_year"] = df.time.apply(lambda x: x.month)
 
@@ -71,9 +76,6 @@ class prepare_data_for_ML(object):
                            weather_dates == x.date()]
                 return row_indx[0]
                 
-            #tm_bool = df.time.apply(lambda x: x.date()) == \
-            #          self.weather_data.date.apply(lambda x: x.date())
-
             # get all the dates in the weather data
             weather_dates = self.weather_data.date.apply(lambda x: x.date()).as_matrix()
 
@@ -91,6 +93,9 @@ class prepare_data_for_ML(object):
 
             # drop time column
             df.drop(["time"], axis=1, inplace=True)
+
+            # drop the last row where bikes_available_future is NaN
+            df.drop(df.index[-1], inplace=True)
             
         else:
             df = None
@@ -99,7 +104,7 @@ class prepare_data_for_ML(object):
 
 # test code
 if __name__ == "__main__":
-    nrows = 100
+    nrows = 1001
     station_ids = [2]
     obj = prepare_data_for_ML(nrows=nrows, station_ids=station_ids)
     df = obj.prepare_data_for_RF()
