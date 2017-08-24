@@ -102,6 +102,12 @@ class prepare_data_for_ML(object):
 
         return df
 
+
+    def prepare_data_for_NN(self):
+        """ prepares data for Neural Network Regression """
+
+        return self.prepare_data_for_RF()
+
 # test code
 if __name__ == "__main__":
     nrows = 1001
