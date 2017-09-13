@@ -63,8 +63,8 @@ class prepare_data_for_ML(object):
             # drops some columns
             df.drop(["docks_available"], axis=1, inplace=True)
 
-            # remove the last row where there is no entry for bikes_available_future
-            df.drop(df.index[-1], inplace=True)
+#            # remove the last row where there is no entry for bikes_available_future
+#            df.drop(df.index[-1], inplace=True)
             
             # add features from status data
             df.loc[:, "time_of_day"] = df.time.apply(lambda x: x.strftime("%H%M"))
