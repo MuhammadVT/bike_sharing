@@ -23,7 +23,7 @@ import pandas as pd
 from time import time
 
 
-def evaluate(results, benchmark_mean_absolute_error):
+def evaluate(results, baseline_error_dict):
     """
     Visualization code to display results of various learners.
 	
@@ -77,11 +77,20 @@ def evaluate(results, benchmark_mean_absolute_error):
     ax[1, 1].set_title("MAE on Testing Set")
     ax[1, 2].set_title("MSE on Testing Set")
     
-    # Add horizontal lines for benchmark model
-    ax[0, 1].axhline(y = benchmark_mean_absolute_error, xmin = -0.1, xmax = 3.0,
+    # Add horizontal lines for baseline model 
+    ax[0, 1].axhline(y = baseline_error_dict["baseline_prediction_MAE_train"],
+                     xmin = -0.1, xmax = 3.0,
                      linewidth = 1, color = 'k', linestyle = 'dashed')
-    ax[1, 1].axhline(y = benchmark_mean_absolute_error, xmin = -0.1, xmax = 3.0,
+    ax[1, 1].axhline(y = baseline_error_dict["baseline_prediction_MAE_test"],
+                     xmin = -0.1, xmax = 3.0,
                      linewidth = 1, color = 'k', linestyle = 'dashed')
+    ax[0, 2].axhline(y = baseline_error_dict["baseline_prediction_MSE_train"],
+                     xmin = -0.1, xmax = 3.0,
+                     linewidth = 1, color = 'k', linestyle = 'dashed')
+    ax[1, 2].axhline(y = baseline_error_dict["baseline_prediction_MSE_test"],
+                     xmin = -0.1, xmax = 3.0,
+                     linewidth = 1, color = 'k', linestyle = 'dashed')
+
 #    ax[0, 2].axhline(y = f1, xmin = -0.1, xmax = 3.0,
 #                     linewidth = 1, color = 'k', linestyle = 'dashed')
 #    ax[1, 2].axhline(y = f1, xmin = -0.1, xmax = 3.0, linewidth = 1,
@@ -89,9 +98,9 @@ def evaluate(results, benchmark_mean_absolute_error):
     
     # Set y-limits for score panels
     ax[0, 1].set_ylim((0, 1))
-    ax[0, 2].set_ylim((0, 1))
+    ax[0, 2].set_ylim((0, 2))
     ax[1, 1].set_ylim((0, 1))
-    ax[1, 2].set_ylim((0, 1))
+    ax[1, 2].set_ylim((0, 2))
 
     # Create patches for the legend
     patches = []
