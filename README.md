@@ -1,4 +1,4 @@
-This project is on the analysis of the Bay Area Bike Share data. The project has three parts:
+This repo is on the analysis of the Bay Area Bike Share data. The project has three parts:
 - [Data preprocessing including data cleaning, handling missing data, data sampling, integration of different data sets, and preparing the data for machine learning models](https://github.com/MuhammadVT/bike_sharing/tree/master/data_preprocessing)
 - [Data exploration to understand trends in the different data sets](https://github.com/MuhammadVT/bike_sharing/tree/master/data_exploration)
 - [Predicting future bike availability at different stations](https://github.com/MuhammadVT/bike_sharing/tree/master/predict_bikes_available)
